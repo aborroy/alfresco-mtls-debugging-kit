@@ -1,0 +1,186 @@
+services:
+    alfresco:
+        build:
+          context: ./alfresco
+          args:
+            ALFRESCO_TAG: ${ALFRESCO_CE_TAG}
+            TRUSTSTORE_TYPE: PKCS12
+            TRUSTSTORE_PASS: truststore
+            KEYSTORE_TYPE: PKCS12
+            KEYSTORE_PASS: keystore
+            CERT_ALIAS: ssl.repo 
+        depends_on: 
+          postgres:
+            condition: service_healthy              
+        environment:
+            JAVA_TOOL_OPTIONS: "
+                -Dencryption.keystore.type=JCEKS
+                -Dencryption.keyAlgorithm=DESede
+                -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding
+                -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore
+                -Dmetadata-keystore.password=mp6yc0UD9e
+                -Dmetadata-keystore.aliases=metadata
+                -Dmetadata-keystore.metadata.password=oKIWzVdEdA
+                -Dmetadata-keystore.metadata.algorithm=DESede
+                -Dssl-keystore.password=keystore
+                -Dssl-keystore.aliases=ssl-alfresco-ca,ssl-repo
+                -Dssl-keystore.ssl-alfresco-ca.password=keystore
+                -Dssl-keystore.ssl-repo.password=keystore
+                -Dssl-truststore.password=truststore
+                -Dssl-truststore.aliases=alfresco-ca,ssl-repo-client
+                -Dssl-truststore.alfresco-ca.password=truststore
+                -Dssl-truststore.ssl-repo-client.password=truststore
+                "
+            JAVA_OPTS : '
+                -Ddb.driver=org.postgresql.Driver
+                -Ddb.url=jdbc:postgresql://postgres:5432/alfresco  
+                -Dalfresco.host=${SERVER_NAME}
+                -Dalfresco.port=8080
+                -Dalfresco.protocol=http 
+                -Dshare.host=${SERVER_NAME}
+                -Dshare.port=8080
+                -Dshare.protocol=http 
+                -Dmessaging.subsystem.autoStart=false
+                -Drepo.event2.enabled=false
+                -DlocalTransform.core-aio.url=http://transform-core-aio:8090/
+                -Dhttpclient.config.transform.connectionRequestTimeout=500000
+                -Dalfresco.restApi.basicAuthScheme=true
+                -Dcsrf.filter.enabled=false 
+                -Dauthentication.protection.enabled=false
+                -Dgoogledocs.enabled=false  
+                -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80
+                -Dsolr.host=solr6
+                -Dsolr.port.ssl=8983
+                -Dsolr.secureComms=https
+                -Dindex.subsystem.name=solr6 
+                -Dencryption.ssl.keystore.type=PKCS12
+                -Dencryption.ssl.keystore.location=/usr/local/tomcat/keystore/ssl.keystore
+                -Dencryption.ssl.truststore.type=PKCS12
+                -Dencryption.ssl.truststore.location=/usr/local/tomcat/keystore/ssl.truststore
+            '
+        healthcheck:
+          test:
+            - CMD
+            - curl
+            - -f
+            - http://localhost:8080/alfresco/api/-default-/public/alfresco/versions/1/probes/-ready-
+          interval: 30s
+          timeout: 3s
+          retries: 3
+          start_period: 1m
+        volumes: 
+            - ./keystores/alfresco:/usr/local/tomcat/keystore
+
+    solr6:
+        build:
+          context: ./search
+          args:
+            SEARCH_TAG: ${SEARCH_CE_TAG}
+            SOLR_HOSTNAME: solr6
+            ALFRESCO_HOSTNAME: alfresco
+            TRUSTSTORE_TYPE: PKCS12
+            KEYSTORE_TYPE: PKCS12
+        environment:
+            SOLR_JAVA_MEM: "-XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"
+            SOLR_ALFRESCO_HOST: "alfresco"
+            SOLR_ALFRESCO_PORT:  "8443" 
+            SOLR_SOLR_HOST: "solr6"
+            SOLR_SOLR_PORT: "8983"
+            SOLR_CREATE_ALFRESCO_DEFAULTS: "alfresco,archive"
+            # Configure mTLS parameters for incoming requests (Jetty)
+            SOLR_SSL_TRUST_STORE: "/opt/alfresco-search-services/keystore/ssl-repo-client.truststore"
+            SOLR_SSL_TRUST_STORE_PASSWORD: "truststore"
+            SOLR_SSL_TRUST_STORE_TYPE: "PKCS12"
+            SOLR_SSL_KEY_STORE: "/opt/alfresco-search-services/keystore/ssl-repo-client.keystore"
+            SOLR_SSL_KEY_STORE_PASSWORD: "keystore"
+            SOLR_SSL_KEY_STORE_TYPE: "PKCS12"
+            SOLR_SSL_NEED_CLIENT_AUTH: "true"
+            # Configure mTLS certificates for outcoming requests (Java)
+            JAVA_TOOL_OPTIONS: "
+                -Dsolr.jetty.truststore.password=truststore
+                -Dsolr.jetty.keystore.password=keystore
+                -Dssl-keystore.password=keystore
+                -Dssl-keystore.aliases=ssl-alfresco-ca,ssl-repo-client
+                -Dssl-keystore.ssl-alfresco-ca.password=keystore
+                -Dssl-keystore.ssl-repo-client.password=keystore
+                -Dssl-truststore.password=truststore
+                -Dssl-truststore.aliases=ssl-alfresco-ca,ssl-repo,ssl-repo-client
+                -Dssl-truststore.ssl-alfresco-ca.password=truststore
+                -Dssl-truststore.ssl-repo.password=truststore
+                -Dssl-truststore.ssl-repo-client.password=truststore
+            " 
+            SOLR_OPTS: "
+                -XX:-UseLargePages 
+                -Dsolr.ssl.checkPeerName=false
+                -Dsolr.allow.unsafe.resourceloading=true 
+            "
+        depends_on:
+          alfresco:
+            condition: service_healthy
+        volumes: 
+            - ./keystores/solr:/opt/alfresco-search-services/keystore         
+            - ./search/config/solr.xml:/opt/alfresco-search-services/solrhome/solr.xml
+            - ./search/jar/solr-http-java-client-0.0.1.jar:/opt/alfresco-search-services/solr/server/solr-webapp/webapp/WEB-INF/lib/solr-http-java-client-0.0.1.jar
+        ports:
+            - 8983:8983        
+
+    transform-core-aio:
+        image: alfresco/alfresco-transform-core-aio:${TRANSFORM_ENGINE_TAG}
+        restart: on-failure
+        environment:
+            JAVA_OPTS: "
+              -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80
+            "
+
+    postgres:
+        image: postgres:${POSTGRES_TAG}
+        environment:
+            - POSTGRES_PASSWORD=alfresco
+            - POSTGRES_USER=alfresco
+            - POSTGRES_DB=alfresco
+        command: "
+            postgres
+              -c max_connections=200
+              -c logging_collector=on
+              -c log_min_messages=LOG
+              -c log_directory=/var/log/postgresql"
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+    
+    share:
+        image: alfresco/alfresco-share:${SHARE_TAG}
+        environment:
+            REPO_HOST: "alfresco"
+            REPO_PORT: "8080"
+            CSRF_FILTER_REFERER: "http://localhost:8080/.*"
+            CSRF_FILTER_ORIGIN: "http://localhost:8080"
+            JAVA_OPTS: "
+                -Dalfresco.context=alfresco
+                -Dalfresco.protocol=http
+                -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80
+                "
+        depends_on:
+          alfresco:
+            condition: service_healthy
+
+    content-app:
+        image: alfresco/alfresco-content-app:${ACA_TAG}
+        depends_on:
+          alfresco:
+            condition: service_healthy
+
+    proxy:
+        image: nginx:stable-alpine
+        depends_on:
+            - alfresco
+            - solr6
+            - share
+            - content-app
+        volumes:
+            - ./config/nginx.conf:/etc/nginx/nginx.conf
+            - ./config/nginx.htpasswd:/etc/nginx/conf.d/nginx.htpasswd 
+        ports:
+            - 8080:8080
