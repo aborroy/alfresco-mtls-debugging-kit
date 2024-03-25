@@ -121,6 +121,7 @@ services:
             - ./keystores/solr:/opt/alfresco-search-services/keystore         
             - ./search/config/solr.xml:/opt/alfresco-search-services/solrhome/solr.xml
             - ./search/jar/solr-http-java-client-0.0.1.jar:/opt/alfresco-search-services/solr/server/solr-webapp/webapp/WEB-INF/lib/solr-http-java-client-0.0.1.jar
+            - ./search/jar/crypto-utils-0.8.0.jar:/opt/alfresco-search-services/solr/server/solr-webapp/webapp/WEB-INF/lib/crypto-utils-0.8.0.jar
         ports:
             - 8983:8983        
 

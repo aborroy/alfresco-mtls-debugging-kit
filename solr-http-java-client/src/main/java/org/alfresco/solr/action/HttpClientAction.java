@@ -1,5 +1,7 @@
 package org.alfresco.solr.action;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.alfresco.crypto.CryptoUtils;
 import org.alfresco.httpclient.HttpClientFactory;
 import org.alfresco.opencmis.dictionary.CMISStrictDictionaryService;
 import org.alfresco.solr.AlfrescoSolrDataModel;
@@ -20,8 +22,6 @@ public class HttpClientAction {
 
     public static final String OK = "OK";
     public static final String ERROR = "ERROR: ";
-    public static final String TRUST = "TRUST";
-    public static final String KEY = "KEY";
 
     /**
      * Adds repository details to the SolrQueryResponse.
@@ -73,7 +73,7 @@ public class HttpClientAction {
         alfrescoVerifications.put("connection", alfrescoConnection);
         if (HttpClientFactory.SecureCommsType.getType(secureCommsType) == HttpClientFactory.SecureCommsType.HTTPS) {
             alfrescoVerifications.put("endpoint",
-                    CryptoUtils.getTlsEndpointParameters(alfrescoProperties.get("alfresco.host"), Integer.parseInt(alfrescoProperties.get("alfresco.port.ssl"))));
+                    convertToMap(CryptoUtils.getTlsEndpointParameters(alfrescoProperties.get("alfresco.host"), Integer.parseInt(alfrescoProperties.get("alfresco.port.ssl")))));
         }
         alfresco.put("verifications", alfrescoVerifications);
 
@@ -115,7 +115,7 @@ public class HttpClientAction {
             keystore.put("environment", keystoreEnv);
 
             keystore.put("verifications",
-                    CryptoUtils.verifyKeyStore(keystoreType, keystoreLocation, keystorePassword.toCharArray(), keystoreAliases));
+                    convertToMap(CryptoUtils.verifyKeyStore(keystoreType, keystoreLocation, keystorePassword.toCharArray(), keystoreAliases)));
             solr.put("keystore", keystore);
 
             Map<String, Object> truststore = new LinkedHashMap<>();
@@ -137,7 +137,7 @@ public class HttpClientAction {
             truststore.put("environment", truststoreEnv);
 
             truststore.put("verifications",
-                    CryptoUtils.verifyKeyStore(truststoreType, truststoreLocation, truststorePassword.toCharArray(), truststoreAliases));
+                    convertToMap(CryptoUtils.verifyKeyStore(truststoreType, truststoreLocation, truststorePassword.toCharArray(), truststoreAliases)));
             solr.put("truststore", truststore);
 
         } else {
@@ -148,6 +148,11 @@ public class HttpClientAction {
         }
 
         rsp.add("solr", solr);
+    }
+
+    private static Map<String, Object> convertToMap(Object object) {
+        ObjectMapper oMapper = new ObjectMapper();
+        return oMapper.convertValue(object, Map.class);
     }
 
 }

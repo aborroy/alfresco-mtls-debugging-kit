@@ -1,4 +1,4 @@
-package org.alfresco.solr.action;
+package org.alfresco.crypto;
 
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
@@ -32,36 +32,41 @@ public class CryptoUtils {
         EXTENDED_KEY_USAGE_NAMES.put("1.3.6.1.5.5.7.3.9", "OCSP Signing");
     }
 
+    private static final String TRUST = "TRUST";
+    private static final String KEY = "KEY";
+    private static final String OK = "OK";
+    private static final String ERROR = "ERROR";
+
     /**
      * Retrieves TLS endpoint parameters such as supported protocols and trusted CA details.
      *
      * @param host The hostname of the endpoint.
      * @param port The port of the endpoint.
-     * @return A map containing TLS endpoint parameters.
+     * @return An object containing TLS endpoint parameters.
      */
-    public static Map<String, Object> getTlsEndpointParameters(String host, int port) {
-        Map<String, Object> parameters = new LinkedHashMap<>();
+    public static Endpoint getTlsEndpointParameters(String host, int port) {
+        Endpoint tlsEndpoint = new Endpoint();
         try {
             SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
             try (SSLSocket socket = (SSLSocket) factory.createSocket(host, port)) {
                 String[] supportedProtocols = socket.getEnabledProtocols();
-                parameters.put("protocol", Arrays.asList(supportedProtocols));
+                tlsEndpoint.setSupportedProcotols(Arrays.asList(supportedProtocols));
                 socket.startHandshake();
                 SSLSession session = socket.getSession();
-                Map<String, Object> certificates = new LinkedHashMap<>();
+                List<TrustedCertificate> trustedCertificates = new ArrayList<>();
                 Arrays.stream(session.getPeerCertificates()).forEach(certificate -> {
-                    Map<String, String> certificateEntry = new LinkedHashMap<>();
+                    TrustedCertificate trustedCertificate = new TrustedCertificate();
                     X509Certificate x509certificate = ((X509Certificate) certificate);
-                    certificateEntry.put("ca-name", x509certificate.getSubjectX500Principal().getName());
-                    certificateEntry.put("expiration", x509certificate.getNotAfter().toString());
-                    certificates.put(x509certificate.getSerialNumber().toString(), certificateEntry);
+                    trustedCertificate.setName(x509certificate.getSubjectX500Principal().getName());
+                    trustedCertificate.setExpiration(x509certificate.getNotAfter());
+                    trustedCertificates.add(trustedCertificate);
                 });
-                parameters.put("trusted-ca", certificates);
+                tlsEndpoint.setTrustedCertificates(trustedCertificates);
             }
         } catch (IOException e) {
             e.printStackTrace(System.err);
         }
-        return parameters;
+        return tlsEndpoint;
     }
 
     /**
@@ -71,65 +76,69 @@ public class CryptoUtils {
      * @param location File path of the keystore.
      * @param password Password for the keystore and the keys.
      * @param aliases  Expected aliases to be part of the keystore.
-     * @return Verification information in a structure of Strings and Maps.
+     * @return Verification information for the keystore.
      */
-    public static Map<String, Object> verifyKeyStore(String type, String location, char[] password, String[] aliases) {
+    public static KeystoreInfo verifyKeyStore(String type, String location, char[] password, String[] aliases) {
 
-        Map<String, Object> status = new LinkedHashMap<>();
+        KeystoreInfo keystoreInfo = new KeystoreInfo();
+
         try {
 
             KeyStore ks = KeyStore.getInstance(type);
             ks.load(Files.newInputStream(Paths.get(location)), password);
 
-            Map<String, Boolean> aliasesVerify = new LinkedHashMap<>();
+            List<AliasExistence> aliasExistenceList = new ArrayList<>();
             for (String alias : aliases) {
-                aliasesVerify.put(alias, ks.containsAlias(alias));
+                AliasExistence aliasExistence = new AliasExistence();
+                aliasExistence.setAlias(alias);
+                aliasExistence.setExists(ks.containsAlias(alias));
+                aliasExistenceList.add(aliasExistence);
             }
-            status.put("aliases-properties", aliasesVerify);
+            keystoreInfo.setAliasExistenceList(aliasExistenceList);
 
             Enumeration<String> aliasesKS = ks.aliases();
-            Map<String, Object> aliasesKSList = new LinkedHashMap<>();
+            List<AliasDetails> aliasDetailsList = new ArrayList<>();
             while (aliasesKS.hasMoreElements()) {
                 String alias = aliasesKS.nextElement();
                 Key aliasKey = ks.getKey(alias, password);
-                Map<String, Object> aliasDetails = new LinkedHashMap<>();
                 X509Certificate aliasCertificate = (X509Certificate) ks.getCertificate(alias);
-                aliasDetails.put("alias", alias);
-                aliasDetails.put("type", aliasKey == null ? HttpClientAction.TRUST : HttpClientAction.KEY);
-                aliasDetails.put("subject", aliasCertificate.getSubjectX500Principal().getName());
-                aliasDetails.put("issuer", aliasCertificate.getIssuerX500Principal().getName());
-                aliasDetails.put("expiration", aliasCertificate.getNotAfter().toString());
-                aliasDetails.put("algorithm", aliasCertificate.getSigAlgOID() + " - " + aliasCertificate.getSigAlgName());
-                aliasDetails.put("size", CryptoUtils.getPublicKeySize(aliasCertificate.getPublicKey()) + " bits");
+                AliasDetails aliasDetails = new AliasDetails();
+                aliasDetails.setAlias(alias);
+                aliasDetails.setType(aliasKey == null ? TRUST : KEY);
+                aliasDetails.setSubject(aliasCertificate.getSubjectX500Principal().getName());
+                aliasDetails.setIssuer(aliasCertificate.getIssuerX500Principal().getName());
+                aliasDetails.setExpiration(aliasCertificate.getNotAfter());
+                aliasDetails.setAlgorithm(aliasCertificate.getSigAlgOID() + " - " + aliasCertificate.getSigAlgName());
+                aliasDetails.setSize(CryptoUtils.getPublicKeySize(aliasCertificate.getPublicKey()) + " bits");
                 if (aliasCertificate.getExtendedKeyUsage() != null) {
-                    List<Object> usages = new ArrayList<>();
+                    List<KeyUsage> usageList = new ArrayList<>();
                     for (String usage : aliasCertificate.getExtendedKeyUsage()) {
-                        Map<String, String> usageDetail = new LinkedHashMap<>();
-                        usageDetail.put("oid", usage);
-                        usageDetail.put("name", EXTENDED_KEY_USAGE_NAMES.getOrDefault(usage, "Unknown Extended Key Usage"));
-                        usages.add(usageDetail);
+                        KeyUsage keyUsage = new KeyUsage();
+                        keyUsage.setOid(usage);
+                        keyUsage.setName(EXTENDED_KEY_USAGE_NAMES.getOrDefault(usage, "Unknown Extended Key Usage"));
+                        usageList.add(keyUsage);
                     }
-                    aliasDetails.put("usage", usages);
+                    aliasDetails.setUsages(usageList);
                 }
-                aliasesKSList.put(alias, aliasDetails);
+                aliasDetailsList.add(aliasDetails);
             }
-            status.put("aliases-keystore", aliasesKSList);
+            keystoreInfo.setAliasDetailsList(aliasDetailsList);
 
-            status.put("keystore", HttpClientAction.OK);
+            keystoreInfo.setStatus(OK);
 
         } catch (NoSuchFileException nsfe) {
             nsfe.printStackTrace(System.err);
-            status.put("keystore", HttpClientAction.ERROR + "File " + location + " does not exist");
+            keystoreInfo.setStatus(ERROR + "File " + location + " does not exist");
         } catch (Exception e) {
             e.printStackTrace(System.err);
             String error = (e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
             if (error.contains("DerInputStream")) {
                 error = "The type of the keystore is not " + type + ". " + error;
             }
-            status.put("keystore", HttpClientAction.ERROR + error);
+            keystoreInfo.setStatus(ERROR + error);
         }
 
-        return status;
+        return keystoreInfo;
 
     }
 
