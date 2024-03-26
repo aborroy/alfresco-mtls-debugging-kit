@@ -4,12 +4,16 @@ Set of tools to debug mTLS configuration issues when installing Alfresco Service
 
 ## Alfresco Repository
 
-TBD
+[alfresco-http-java-client](alfresco-http-java-client)
 
 ## Alfresco Search Services
 
 [solr-http-java-client](solr-http-java-client)
 
-## Sample deployment
+## Common Java Library for Cryptographic operations
+
+[crypto-utils](crypto-utils)
+
+## Sample Docker Compose deployment
 
 [docker](docker)
