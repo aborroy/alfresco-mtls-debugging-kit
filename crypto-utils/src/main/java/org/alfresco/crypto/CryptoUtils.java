@@ -1,9 +1,6 @@
 package org.alfresco.crypto;
 
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import java.io.IOException;
+import javax.net.ssl.*;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
@@ -38,21 +35,48 @@ public class CryptoUtils {
     private static final String ERROR = "ERROR";
 
     /**
-     * Retrieves TLS endpoint parameters such as supported protocols and trusted CA details.
+     * Retrieves TLS endpoint parameters for a given host and port, using provided keystore and truststore information.
+     * This method establishes an SSL connection to the specified host and port and retrieves TLS protocol version,
+     * along with trusted certificates.
      *
-     * @param host The hostname of the endpoint.
-     * @param port The port of the endpoint.
-     * @return An object containing TLS endpoint parameters.
+     * @param host          The hostname or IP address of the server.
+     * @param port          The port number of the server.
+     * @param typeKs        The type of the keystore (e.g., "JKS", "PKCS12").
+     * @param locationKs    The file path or URI of the keystore.
+     * @param passwordKs    The password for accessing the keystore.
+     * @param typeTs        The type of the truststore (e.g., "JKS", "PKCS12").
+     * @param locationTs    The file path or URI of the truststore.
+     * @param passwordTs    The password for accessing the truststore.
+     * @return An {@link Endpoint} object containing TLS endpoint parameters.
      */
-    public static Endpoint getTlsEndpointParameters(String host, int port) {
+    public static Endpoint getTlsEndpointParameters(
+            String host, int port,
+            String typeKs, String locationKs, char[] passwordKs,
+            String typeTs, String locationTs, char[] passwordTs) {
+
         Endpoint tlsEndpoint = new Endpoint();
+
         try {
-            SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+
+            KeyManagerFactory kmFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            KeyStore ks = KeyStore.getInstance(typeKs);
+            ks.load(Files.newInputStream(Paths.get(locationKs)), passwordKs);
+            kmFactory.init(ks, passwordKs);
+
+            TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            KeyStore ts = KeyStore.getInstance(typeTs);
+            ts.load(Files.newInputStream(Paths.get(locationTs)), passwordTs);
+            tmFactory.init(ts);
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(kmFactory.getKeyManagers(), tmFactory.getTrustManagers(), null);
+            SSLSocketFactory factory = sslContext.getSocketFactory();
+
             try (SSLSocket socket = (SSLSocket) factory.createSocket(host, port)) {
-                String[] supportedProtocols = socket.getEnabledProtocols();
-                tlsEndpoint.setSupportedProcotols(Arrays.asList(supportedProtocols));
+                socket.setEnabledProtocols(new String[] { "TLSv1.3", "TLSv1.2"});
                 socket.startHandshake();
                 SSLSession session = socket.getSession();
+                tlsEndpoint.setTlsProcotol(session.getProtocol());
                 List<TrustedCertificate> trustedCertificates = new ArrayList<>();
                 Arrays.stream(session.getPeerCertificates()).forEach(certificate -> {
                     TrustedCertificate trustedCertificate = new TrustedCertificate();
@@ -63,7 +87,8 @@ public class CryptoUtils {
                 });
                 tlsEndpoint.setTrustedCertificates(trustedCertificates);
             }
-        } catch (IOException e) {
+
+        } catch (Exception e) {
             e.printStackTrace(System.err);
         }
         return tlsEndpoint;

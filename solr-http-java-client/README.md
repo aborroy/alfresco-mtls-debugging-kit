@@ -8,7 +8,7 @@ Sample response:
 <response>
    <lst name="responseHeader">
       <int name="status">0</int>
-      <int name="QTime">145</int>
+      <int name="QTime">753</int>
    </lst>
    <lst name="alfresco">
       <lst name="properties">
@@ -22,10 +22,7 @@ Sample response:
          <str name="alfresco.solr.api.url">https://alfresco:8443/alfresco/api/solr</str>
          <str name="connection">OK</str>
          <lst name="endpoint">
-            <arr name="supportedProcotols">
-               <str>TLSv1.3</str>
-               <str>TLSv1.2</str>
-            </arr>
+            <str name="tlsProcotol">TLSv1.3</str>
             <arr name="trustedCertificates">
                <lst>
                   <str name="name">CN=Custom Alfresco Repository,OU=Unknown,O=Alfresco Software Ltd.,ST=UK,C=GB</str>
@@ -76,7 +73,7 @@ Sample response:
                   <str name="expiration">2041-12-11 08:50 AM UTC</str>
                   <str name="algorithm">1.2.840.113549.1.1.11 - SHA256withRSA</str>
                   <str name="size">2048 bits</str>
-                  <null name="usages" />
+                  <null name="usages"/>
                </lst>
             </arr>
             <arr name="aliasExistenceList">
@@ -111,7 +108,7 @@ Sample response:
                   <str name="expiration">2041-12-11 08:50 AM UTC</str>
                   <str name="algorithm">1.2.840.113549.1.1.11 - SHA256withRSA</str>
                   <str name="size">2048 bits</str>
-                  <null name="usages" />
+                  <null name="usages"/>
                </lst>
                <lst>
                   <str name="alias">ssl-repo</str>

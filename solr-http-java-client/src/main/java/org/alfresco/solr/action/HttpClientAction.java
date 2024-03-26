@@ -9,7 +9,6 @@ import org.alfresco.solr.SolrKeyResourceLoader;
 import org.alfresco.solr.client.Acl;
 import org.alfresco.solr.client.SOLRAPIClient;
 import org.alfresco.solr.client.SOLRAPIClientFactory;
-import org.alfresco.solr.security.SecretSharedPropertyCollector;
 import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.response.SolrQueryResponse;
 
@@ -34,7 +33,6 @@ public class HttpClientAction {
 
         Map<String, Object> alfresco = new LinkedHashMap<>();
 
-        SecretSharedPropertyCollector.completeCoreProperties(coreProperties);
         String secureCommsType = coreProperties.getProperty("alfresco.secureComms", "none");
 
         Map<String, String> alfrescoProperties = new LinkedHashMap<>();
@@ -71,9 +69,28 @@ public class HttpClientAction {
             alfrescoConnection = ERROR + e.getMessage();
         }
         alfrescoVerifications.put("connection", alfrescoConnection);
+
         if (HttpClientFactory.SecureCommsType.getType(secureCommsType) == HttpClientFactory.SecureCommsType.HTTPS) {
+
+            Properties jvmProperties = System.getProperties();
+
+            String keystoreType = coreProperties.getProperty("alfresco.encryption.ssl.keystore.type", "JCEKS");
+            String keystoreLocation =
+                    coreProperties.getProperty("alfresco.encryption.ssl.keystore.location", "ssl.repo.client.keystore");
+            String keystorePassword = jvmProperties.getProperty("ssl-keystore.password");
+
+            String truststoreType = coreProperties.getProperty("alfresco.encryption.ssl.truststore.type", "JCEKS");
+            String truststoreLocation =
+                    coreProperties.getProperty("alfresco.encryption.ssl.truststore.location", "ssl.repo.client.truststore");
+            String truststorePassword = jvmProperties.getProperty("ssl-truststore.password");
+
             alfrescoVerifications.put("endpoint",
-                    convertToMap(CryptoUtils.getTlsEndpointParameters(alfrescoProperties.get("alfresco.host"), Integer.parseInt(alfrescoProperties.get("alfresco.port.ssl")))));
+                    convertToMap(CryptoUtils.getTlsEndpointParameters(
+                            alfrescoProperties.get("alfresco.host"),
+                            Integer.parseInt(alfrescoProperties.get("alfresco.port.ssl")),
+                            keystoreType, keystoreLocation, keystorePassword.toCharArray(),
+                            truststoreType, truststoreLocation, truststorePassword.toCharArray())));
+
         }
         alfresco.put("verifications", alfrescoVerifications);
 

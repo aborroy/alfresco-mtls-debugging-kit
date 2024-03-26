@@ -4,15 +4,15 @@ import java.util.List;
 
 public class Endpoint {
 
-    List<String> supportedProcotols;
+    String tlsProcotol;
     List<TrustedCertificate> trustedCertificates;
 
-    public List<String> getSupportedProcotols() {
-        return supportedProcotols;
+    public String getTlsProcotol() {
+        return tlsProcotol;
     }
 
-    public void setSupportedProcotols(List<String> supportedProcotols) {
-        this.supportedProcotols = supportedProcotols;
+    public void setTlsProcotol(String tlsProcotol) {
+        this.tlsProcotol = tlsProcotol;
     }
 
     public List<TrustedCertificate> getTrustedCertificates() {
