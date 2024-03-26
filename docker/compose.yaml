@@ -8,7 +8,7 @@ services:
             TRUSTSTORE_PASS: truststore
             KEYSTORE_TYPE: PKCS12
             KEYSTORE_PASS: keystore
-            CERT_ALIAS: ssl.repo 
+            CERT_ALIAS: ssl-repo 
         depends_on: 
           postgres:
             condition: service_healthy              
@@ -70,6 +70,8 @@ services:
           start_period: 1m
         volumes: 
             - ./keystores/alfresco:/usr/local/tomcat/keystore
+            - ./alfresco/jar/alfresco-http-java-client-0.8.0.jar:/usr/local/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-http-java-client-0.8.0.jar
+            - ./search/jar/crypto-utils-0.8.0.jar:/usr/local/tomcat/webapps/alfresco/WEB-INF/lib/crypto-utils-0.8.0.jar
 
     solr6:
         build:

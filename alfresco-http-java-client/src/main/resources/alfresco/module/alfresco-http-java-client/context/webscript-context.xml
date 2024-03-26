@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	<bean id="webscript.org.alfresco.repository.admin.support-tools.admin-search-client.get"
+		  class="org.alfresco.repository.admin.SearchClientWebScript"
+		  parent="webscript">
+		<property name="globalProperties" ref="global-properties"/>
+		<property name="searchService" ref="SearchService"/>
+	</bean>
+</beans>

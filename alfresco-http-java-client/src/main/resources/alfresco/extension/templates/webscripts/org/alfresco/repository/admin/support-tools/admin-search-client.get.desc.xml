@@ -1,0 +1,9 @@
+<webscript>
+    <shortname>Search Client</shortname>
+    <description>Additional details and verifications for mTLS connection with Solr</description>
+    <url>/admin/admin-search-client</url>
+    <authentication>admin</authentication>
+    <format default="html">argument</format>
+    <lifecycle>internal</lifecycle>
+    <family>AdminConsole</family>
+</webscript>
