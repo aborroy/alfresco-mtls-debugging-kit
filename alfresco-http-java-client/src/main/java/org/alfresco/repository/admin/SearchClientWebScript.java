@@ -71,13 +71,14 @@ public class SearchClientWebScript extends DeclarativeWebScript {
 
         }
 
-        String connection = "OK";
+        String connection = "true";
         try {
             searchService.query(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE,
                     SearchService.LANGUAGE_FTS_ALFRESCO,
                     "test");
         } catch (RuntimeException re) {
-            connection = "ERROR: " + re.getMessage();
+            connection = "false";
+            model.put("connectionError", findExceptionCause(re).getMessage());
             re.printStackTrace(System.err);
         }
         model.put("connection", connection);
@@ -124,6 +125,15 @@ public class SearchClientWebScript extends DeclarativeWebScript {
     private static Map<String, Object> convertToMap(Object object) {
         ObjectMapper oMapper = new ObjectMapper();
         return oMapper.convertValue(object, Map.class);
+    }
+
+    private static Throwable findExceptionCause(Throwable throwable) {
+        Objects.requireNonNull(throwable);
+        Throwable rootCause = throwable;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        return rootCause;
     }
 
 }

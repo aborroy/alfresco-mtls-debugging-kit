@@ -20,15 +20,22 @@
         <#if endpoint??>
         <div class="column-right">
             <br/><h4>Verifications</h4>
-            <@field value=connection label="Connection" description="Status of connection from Repo to Solr"/>
+            <@status label="Connection" description="Status of connection from Repo to Solr" value=connection />
+            <#if connectionError??>
+              <font color="#8b0000">
+                  <@field value=connectionError label="Error" description="Technical error when connecting from Repo to Solr. Check Alfresco Repository log for details."/>
+              </font>
+            </#if>
             <@field value=endpoint["tlsProcotol"] label="TLS Protocol" description="TLS Protocol to connect to Solr"/>
             <@field value="" label="Trusted Certificates" description="List of trusted certificates to connect to Solr"/>
+            <#if endpoint["trustedCertificates"]??>
             <ul style="margin-left: 1em;">
                 <#list endpoint["trustedCertificates"] as certificate>
                     <li style="border-top: 1px solid #ccc"><@field value=certificate.name label="Subject"/></li>
                     <li><@field value=certificate.expiration label="Expiration"/></li>
                 </#list>
-             </ul>
+            </ul>
+            </#if>
         </div>
         </#if>
     </div>
