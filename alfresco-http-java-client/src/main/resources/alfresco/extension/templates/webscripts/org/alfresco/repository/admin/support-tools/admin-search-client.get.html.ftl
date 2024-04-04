@@ -64,9 +64,11 @@
                 <@field value=keystore.aliases label="Aliases" description="ssl-keystore.aliases: keystore aliases"/>
                 <br/><div class="control field">Aliases existing in Keystore</div>
                 <ul style="margin-left: 1em;">
-                  <#list keystore["aliasExistenceList"] as alias>
-                      <li>${alias.alias}: ${alias.exists?c}</li>
-                  </#list>
+                  <#if keystore["aliasExistenceList"]??>
+                      <#list keystore["aliasExistenceList"] as alias>
+                          <li>${alias.alias}: ${alias.exists?c}</li>
+                      </#list>
+                  </#if>
                 </ul>
             </#if>
 
@@ -116,9 +118,11 @@
                 <@field value=truststore.aliases label="Aliases" description="ssl-truststore.aliases: keystore aliases"/>
                 <br/><div class="control field">Aliases existing in Truststore</div>
                 <ul style="margin-left: 1em;">
-                  <#list truststore["aliasExistenceList"] as alias>
-                      <li>${alias.alias}: ${alias.exists?c}</li>
-                  </#list>
+                  <#if truststore["aliasExistenceList"]??>
+                      <#list truststore["aliasExistenceList"] as alias>
+                          <li>${alias.alias}: ${alias.exists?c}</li>
+                      </#list>
+                  </#if>
                 </ul>
             </#if>
         </div>

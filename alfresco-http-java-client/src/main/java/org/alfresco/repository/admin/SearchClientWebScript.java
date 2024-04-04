@@ -88,7 +88,10 @@ public class SearchClientWebScript extends DeclarativeWebScript {
             String ksType = globalProperties.getProperty("encryption.ssl.keystore.type");
             String ksLocation = globalProperties.getProperty("encryption.ssl.keystore.location");
             String ksPassword = jvmProperties.getProperty("ssl-keystore.password");
-            String[] keystoreAliases = jvmProperties.getProperty("ssl-keystore.aliases").split(",");
+            String[] keystoreAliases = new String[]{};
+            if (jvmProperties.getProperty("ssl-keystore.aliases") != null) {
+                keystoreAliases = jvmProperties.getProperty("ssl-keystore.aliases").split(",");
+            }
 
             Map<String, Object> keystore = convertToMap(CryptoUtils.verifyKeyStore(ksType, ksLocation, ksPassword.toCharArray(), keystoreAliases));
             keystore.put("type", ksType);
@@ -101,7 +104,10 @@ public class SearchClientWebScript extends DeclarativeWebScript {
             String tsType = globalProperties.getProperty("encryption.ssl.truststore.type");
             String tsLocation = globalProperties.getProperty("encryption.ssl.truststore.location");
             String tsPassword = jvmProperties.getProperty("ssl-truststore.password");
-            String[] truststoreAliases = jvmProperties.getProperty("ssl-truststore.aliases").split(",");
+            String[] truststoreAliases = new String[]{};
+            if (jvmProperties.getProperty("ssl-truststore.aliases") != null) {
+                truststoreAliases = jvmProperties.getProperty("ssl-truststore.aliases").split(",");
+            }
 
             Map<String, Object> truststore = convertToMap(CryptoUtils.verifyKeyStore(tsType, tsLocation, tsPassword.toCharArray(), truststoreAliases));
             truststore.put("type", tsType);
