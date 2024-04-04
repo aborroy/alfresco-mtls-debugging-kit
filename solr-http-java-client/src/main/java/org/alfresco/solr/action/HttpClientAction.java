@@ -119,7 +119,10 @@ public class HttpClientAction {
             String keystoreLocation =
                     coreProperties.getProperty("alfresco.encryption.ssl.keystore.location", "ssl.repo.client.keystore");
             String keystorePassword = jvmProperties.getProperty("ssl-keystore.password");
-            String[] keystoreAliases = jvmProperties.getProperty("ssl-keystore.aliases").split(",");
+            String[] keystoreAliases = new String[]{};
+            if (jvmProperties.getProperty("ssl-keystore.aliases") != null) {
+                keystoreAliases = jvmProperties.getProperty("ssl-keystore.aliases").split(",");
+            }
 
             Map<String, Object> keystoreProperties = new LinkedHashMap<>();
             keystoreProperties.put("alfresco.encryption.ssl.keystore.type", keystoreType);
@@ -141,7 +144,10 @@ public class HttpClientAction {
             String truststoreLocation =
                     coreProperties.getProperty("alfresco.encryption.ssl.truststore.location", "ssl.repo.client.truststore");
             String truststorePassword = jvmProperties.getProperty("ssl-truststore.password");
-            String[] truststoreAliases = jvmProperties.getProperty("ssl-truststore.aliases").split(",");
+            String[] truststoreAliases = new String[]{};
+            if (jvmProperties.getProperty("ssl-truststore.aliases") != null) {
+                truststoreAliases = jvmProperties.getProperty("ssl-truststore.aliases").split(",");
+            }
 
             Map<String, Object> truststoreProperties = new LinkedHashMap<>();
             truststoreProperties.put("alfresco.encryption.ssl.truststore.type", truststoreType);
