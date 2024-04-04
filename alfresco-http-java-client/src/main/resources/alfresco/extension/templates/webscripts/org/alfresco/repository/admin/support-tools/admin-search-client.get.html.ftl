@@ -55,7 +55,12 @@
 
             <#if keystore??>
                 <br/><h4>Keystore</h4>
-                <@field value=keystore.status label="Status" description="Keystore verification"/>
+                <@status label="Status" description="Keystore status verification" value=keystore.status />
+                <#if keystore.statusError??>
+                  <font color="#8b0000">
+                      <@field value=keystore.statusError label="Error" description="Technical error when verifying Keystore."/>
+                  </font>
+                </#if>
                 <br/><div class="control field">Properties</div>
                 <@field value=keystore.type label="Type" description="encryption.ssl.keystore.type: keystore type"/>
                 <@field value=keystore.location label="Path" description="encryption.ssl.keystore.location: keystore location"/>
@@ -109,7 +114,12 @@
         <div class="column-left">
             <#if truststore??>
                 <br/><h4>Truststore</h4>
-                <@field value=truststore.status label="Status" description="Truststore verification"/>
+                <@status label="Status" description="Truststore status verification" value=truststore.status />
+                <#if truststore.statusError??>
+                  <font color="#8b0000">
+                      <@field value=truststore.statusError label="Error" description="Technical error when verifying Truststore."/>
+                  </font>
+                </#if>
                 <br/><div class="control field">Properties</div>
                 <@field value=truststore.type label="Type" description="encryption.ssl.truststore.type: truststore type"/>
                 <@field value=truststore.location label="Path" description="encryption.ssl.truststore.location: truststore location"/>

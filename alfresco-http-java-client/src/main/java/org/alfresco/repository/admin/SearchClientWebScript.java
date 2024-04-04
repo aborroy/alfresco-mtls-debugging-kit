@@ -99,6 +99,13 @@ public class SearchClientWebScript extends DeclarativeWebScript {
             keystore.put("password", ksPassword);
             keystore.put("aliases", Arrays.toString(keystoreAliases));
 
+            if (keystore.get("status").equals("OK")) {
+                keystore.put("status", "true");
+            } else {
+                keystore.put("status", "false");
+                keystore.put("statusError", keystore.get("status"));
+            }
+
             model.put("keystore", keystore);
 
             String tsType = globalProperties.getProperty("encryption.ssl.truststore.type");
@@ -114,6 +121,13 @@ public class SearchClientWebScript extends DeclarativeWebScript {
             truststore.put("location", tsLocation);
             truststore.put("password", tsPassword);
             truststore.put("aliases", Arrays.toString(truststoreAliases));
+
+            if (truststore.get("status").equals("OK")) {
+                truststore.put("status", "true");
+            } else {
+                truststore.put("status", "false");
+                truststore.put("statusError", truststore.get("status"));
+            }
 
             model.put("truststore", truststore);
 
