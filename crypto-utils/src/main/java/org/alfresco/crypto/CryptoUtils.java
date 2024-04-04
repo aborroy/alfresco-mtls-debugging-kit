@@ -8,6 +8,7 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 
@@ -177,6 +178,8 @@ public class CryptoUtils {
         String algorithm = publicKey.getAlgorithm();
         if (algorithm.equals("RSA")) {
             return ((RSAPublicKey) publicKey).getModulus().bitLength();
+        } else if (algorithm.equals("EC")) {
+            return ((ECPublicKey) publicKey).getParams().getCurve().getField().getFieldSize();
         }
         return 0; // Unsupported algorithm
     }
