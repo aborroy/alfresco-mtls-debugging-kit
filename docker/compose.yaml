@@ -11,7 +11,7 @@ services:
             TRUSTSTORE_LOCATION: /usr/local/tomcat/keystore/ssl.truststore
             TRUSTSTORE_TYPE: PKCS12
             TRUSTSTORE_PASS: truststore
-            CERT_ALIAS: solr-client
+            CERT_ALIAS: ssl-repo
             # EC, RSA
             CERT_TYPE: RSA
         depends_on: 
