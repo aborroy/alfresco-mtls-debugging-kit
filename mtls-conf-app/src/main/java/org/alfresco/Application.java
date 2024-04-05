@@ -1,13 +1,19 @@
 package org.alfresco;
 
 import org.alfresco.crypto.CryptoUtils;
+import org.apache.commons.text.StringSubstitutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * Entry point for the command-line application that tests mTLS connections and performs error analysis.
+ */
 public class Application implements CommandLineRunner {
 
     @Value("${endpoint.host}")
@@ -41,50 +47,24 @@ public class Application implements CommandLineRunner {
         SpringApplication.run(Application.class, args);
     }
 
-    // Bad port          java.net.ConnectException: Connection refused
-    // Bad server        java.net.ConnectException: Operation timed out
-    //                   java.net.UnknownHostException:
-    // Bad KS type       java.io.IOException: Invalid keystore format
-    // Bad pass          java.io.IOException: keystore password was incorrect
-    // File missed       java.nio.file.NoSuchFileException:
-    // Wrong keystore    javax.net.ssl.SSLHandshakeException: Received fatal alert: bad_certificate
-    // Wrong truststore  sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
-
-    private void analyzeErrors(ByteArrayOutputStream errorStream, String element) {
+    /**
+     * Analyzes errors and prints error messages based on the error stream content.
+     *
+     * @param errorStream Error stream containing error messages.
+     * @param element     Element to analyze errors for (e.g., "ENDPOINT", "CONNECTION", "KEYSTORE", "TRUSTSTORE").
+     * @param params      Key and value map for ErrorCatalog error messages named parameters.
+     */
+    private void analyzeErrors(ByteArrayOutputStream errorStream, String element, Map<String, Object> params) {
 
         String error = errorStream.toString();
         if (!error.isEmpty()) {
-
             System.out.println("--");
-
             System.out.println("ERRORS for " + element + ": ");
-            if (error.contains("java.net.ConnectException: Connection refused")) {
-                System.out.println("Current port setting (" + port + ") seems to be wrong. \n" +
-                        "Verify if the port is open in server '" + host + "' or change the value to a different port.");
-            }
-            if (error.contains("java.net.ConnectException: Operation timed out") || error.contains("java.net.UnknownHostException:")) {
-                System.out.println("Current server setting (" + host + ") seems to be wrong. \n" +
-                        "Verify if you have access to server '" + host + "' or change the value to a different host name.");
-            }
-            if (error.contains("java.io.IOException: Invalid keystore format")) {
-                System.out.println("Current keystore type setting (" + (element.equals ("KEYSTORE") ? keystoreType : truststoreType) + ") seems to be wrong. \n" +
-                        "Verify if keystore located in " + (element.equals ("KEYSTORE") ? keystoreLocation : truststoreLocation) + " has this format. \n" +
-                        "You may use the following command: keytool -list -keystore "+ (element.equals ("KEYSTORE") ? keystoreLocation : truststoreLocation));
-            }
-            if (error.contains("java.io.IOException: keystore password was incorrect")) {
-                System.out.println("Current keystore password setting (" + (element.equals ("KEYSTORE") ? keystorePassword : truststorePassword) + ") seems to be wrong. \n" +
-                        "Verify if keystore located in " + (element.equals ("KEYSTORE") ? keystoreLocation : truststoreLocation) + " can be opened with this password.");
-            }
-            if (error.contains("java.nio.file.NoSuchFileException:")) {
-                System.out.println("Current keystore location setting (" + (element.equals ("KEYSTORE") ? keystoreLocation : truststoreLocation) + ") seems to be wrong. \n" +
-                        "Verify if keystore os located in " + (element.equals ("KEYSTORE") ? keystoreLocation : truststoreLocation) + " or change the property value.");
-            }
-            if (error.contains("javax.net.ssl.SSLHandshakeException: Received fatal alert: bad_certificate")) {
-                System.out.println("Current keystore seems to be wrong. It does not include KEY certificates accepted by the endpoint.");
-            }
-            if (error.contains("sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target")) {
-                System.out.println("Current truststore seems to be wrong. It does not include TRUST certificates provided by the endpoint.");
-            }
+            ErrorCatalog.ERRORS.keySet().forEach(message -> {
+                if (error.contains(message)) {
+                    System.out.println(StringSubstitutor.replace(ErrorCatalog.ERRORS.get(message), params, "${", "}"));
+                }
+            });
             System.out.println("ERRORS DETAIL: ");
             System.out.println(error);
             errorStream.reset();
@@ -98,27 +78,37 @@ public class Application implements CommandLineRunner {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         System.setErr(new PrintStream(outputStream));
 
+        Map<String, Object> params = new HashMap<>();
+        params.put("host", host);
+        params.put("port", port);
+
         CryptoUtils.getTlsEndpointParameters(
                 host, port,
                 keystoreType, keystoreLocation, keystorePassword.toCharArray(),
                 truststoreType, truststoreLocation, truststorePassword.toCharArray());
 
-        analyzeErrors(outputStream, "ENDPOINT");
+        analyzeErrors(outputStream, "ENDPOINT", params);
 
         HttpConnectionRunner.testConnection(
                 host, port, context,
                 keystoreType, keystoreLocation, keystorePassword.toCharArray(),
                 truststoreType, truststoreLocation, truststorePassword.toCharArray());
 
-        analyzeErrors(outputStream, "CONNECTION");
+        analyzeErrors(outputStream, "CONNECTION", params);
 
         CryptoUtils.verifyKeyStore(keystoreType, keystoreLocation, keystorePassword.toCharArray(), new String[]{});
 
-        analyzeErrors(outputStream, "KEYSTORE");
+        params.put("keystore_type", keystoreType);
+        params.put("keystore_location", keystoreLocation);
+        params.put("keystore_password", keystorePassword);
+        analyzeErrors(outputStream, "KEYSTORE", params);
 
         CryptoUtils.verifyKeyStore(truststoreType, truststoreLocation, truststorePassword.toCharArray(), new String[]{});
 
-        analyzeErrors(outputStream, "TRUSTSTORE");
+        params.put("keystore_type", truststoreType);
+        params.put("keystore_location", truststoreLocation);
+        params.put("keystore_password", truststorePassword);
+        analyzeErrors(outputStream, "TRUSTSTORE", params);
 
     }
 
