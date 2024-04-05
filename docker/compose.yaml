@@ -4,11 +4,16 @@ services:
           context: ./alfresco
           args:
             ALFRESCO_TAG: ${ALFRESCO_CE_TAG}
-            TRUSTSTORE_TYPE: PKCS12
-            TRUSTSTORE_PASS: truststore
+            # Configuration for mTLS incoming requests (Tomcat)
+            KEYSTORE_LOCATION: /usr/local/tomcat/keystore/ssl.keystore
             KEYSTORE_TYPE: PKCS12
             KEYSTORE_PASS: keystore
-            CERT_ALIAS: ssl-repo 
+            TRUSTSTORE_LOCATION: /usr/local/tomcat/keystore/ssl.truststore
+            TRUSTSTORE_TYPE: PKCS12
+            TRUSTSTORE_PASS: truststore
+            CERT_ALIAS: solr-client
+            # EC, RSA
+            CERT_TYPE: RSA
         depends_on: 
           postgres:
             condition: service_healthy              
@@ -23,17 +28,12 @@ services:
                 -Dmetadata-keystore.metadata.password=oKIWzVdEdA
                 -Dmetadata-keystore.metadata.algorithm=DESede
                 -Dssl-keystore.password=keystore
-                -Dssl-keystore.aliases=ssl-alfresco-ca,ssl-repo
-                -Dssl-keystore.ssl-alfresco-ca.password=keystore
-                -Dssl-keystore.ssl-repo.password=keystore
                 -Dssl-truststore.password=truststore
-                -Dssl-truststore.aliases=alfresco-ca,ssl-repo-client
-                -Dssl-truststore.alfresco-ca.password=truststore
-                -Dssl-truststore.ssl-repo-client.password=truststore
                 "
+            # Configuration for mTLS outcoming requests (Java)    
             JAVA_OPTS : '
                 -Ddb.driver=org.postgresql.Driver
-                -Ddb.url=jdbc:postgresql://postgres:5432/alfresco  
+                -Ddb.url=jdbc:postgresql://postgres:5432/alfresco
                 -Dalfresco.host=${SERVER_NAME}
                 -Dalfresco.port=8080
                 -Dalfresco.protocol=http 
@@ -52,7 +52,7 @@ services:
                 -Dsolr.host=solr6
                 -Dsolr.port.ssl=8983
                 -Dsolr.secureComms=https
-                -Dindex.subsystem.name=solr6 
+                -Dindex.subsystem.name=solr6
                 -Dencryption.ssl.keystore.type=PKCS12
                 -Dencryption.ssl.keystore.location=/usr/local/tomcat/keystore/ssl.keystore
                 -Dencryption.ssl.truststore.type=PKCS12
@@ -68,6 +68,8 @@ services:
           timeout: 3s
           retries: 3
           start_period: 1m
+        ports:
+            - 8443:8443          
         volumes: 
             - ./keystores/alfresco:/usr/local/tomcat/keystore
             - ./alfresco/jar/alfresco-http-java-client-0.8.0.jar:/usr/local/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-http-java-client-0.8.0.jar
@@ -77,11 +79,14 @@ services:
         build:
           context: ./search
           args:
+            # Configuration for mTLS outcoming requests (Java)
             SEARCH_TAG: ${SEARCH_CE_TAG}
             SOLR_HOSTNAME: solr6
             ALFRESCO_HOSTNAME: alfresco
-            TRUSTSTORE_TYPE: PKCS12
             KEYSTORE_TYPE: PKCS12
+            KEYSTORE_LOCATION: /opt/alfresco-search-services/keystore/ssl-repo-client.keystore
+            TRUSTSTORE_TYPE: PKCS12
+            TRUSTSTORE_LOCATION: /opt/alfresco-search-services/keystore/ssl-repo-client.truststore
         environment:
             SOLR_JAVA_MEM: "-XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"
             SOLR_ALFRESCO_HOST: "alfresco"
@@ -89,27 +94,19 @@ services:
             SOLR_SOLR_HOST: "solr6"
             SOLR_SOLR_PORT: "8983"
             SOLR_CREATE_ALFRESCO_DEFAULTS: "alfresco,archive"
-            # Configure mTLS parameters for incoming requests (Jetty)
-            SOLR_SSL_TRUST_STORE: "/opt/alfresco-search-services/keystore/ssl-repo-client.truststore"
-            SOLR_SSL_TRUST_STORE_PASSWORD: "truststore"
-            SOLR_SSL_TRUST_STORE_TYPE: "PKCS12"
+            # Configuration for mTLS incoming requests (Jetty)
             SOLR_SSL_KEY_STORE: "/opt/alfresco-search-services/keystore/ssl-repo-client.keystore"
             SOLR_SSL_KEY_STORE_PASSWORD: "keystore"
             SOLR_SSL_KEY_STORE_TYPE: "PKCS12"
+            SOLR_SSL_TRUST_STORE: "/opt/alfresco-search-services/keystore/ssl-repo-client.truststore"
+            SOLR_SSL_TRUST_STORE_PASSWORD: "truststore"
+            SOLR_SSL_TRUST_STORE_TYPE: "PKCS12"
             SOLR_SSL_NEED_CLIENT_AUTH: "true"
-            # Configure mTLS certificates for outcoming requests (Java)
             JAVA_TOOL_OPTIONS: "
                 -Dsolr.jetty.truststore.password=truststore
                 -Dsolr.jetty.keystore.password=keystore
                 -Dssl-keystore.password=keystore
-                -Dssl-keystore.aliases=ssl-alfresco-ca,ssl-repo-client
-                -Dssl-keystore.ssl-alfresco-ca.password=keystore
-                -Dssl-keystore.ssl-repo-client.password=keystore
                 -Dssl-truststore.password=truststore
-                -Dssl-truststore.aliases=ssl-alfresco-ca,ssl-repo,ssl-repo-client
-                -Dssl-truststore.ssl-alfresco-ca.password=truststore
-                -Dssl-truststore.ssl-repo.password=truststore
-                -Dssl-truststore.ssl-repo-client.password=truststore
             " 
             SOLR_OPTS: "
                 -XX:-UseLargePages 
@@ -176,14 +173,16 @@ services:
             condition: service_healthy
 
     proxy:
-        image: nginx:stable-alpine
+        image: alfresco/alfresco-acs-nginx:3.4.2
+        environment:
+            DISABLE_PROMETHEUS: "true"
+            DISABLE_SYNCSERVICE: "true"
+            DISABLE_ADW: "true"
+            DISABLE_CONTROL_CENTER: "true"
         depends_on:
             - alfresco
             - solr6
             - share
             - content-app
-        volumes:
-            - ./config/nginx.conf:/etc/nginx/nginx.conf
-            - ./config/nginx.htpasswd:/etc/nginx/conf.d/nginx.htpasswd 
         ports:
             - 8080:8080
