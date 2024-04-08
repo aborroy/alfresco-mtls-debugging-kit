@@ -18,7 +18,7 @@ services:
           postgres:
             condition: service_healthy              
         environment:
-            JAVA_TOOL_OPTIONS: "
+            JAVA_TOOL_OPTIONS: >-
                 -Dencryption.keystore.type=JCEKS
                 -Dencryption.keyAlgorithm=DESede
                 -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding
@@ -29,9 +29,8 @@ services:
                 -Dmetadata-keystore.metadata.algorithm=DESede
                 -Dssl-keystore.password=keystore
                 -Dssl-truststore.password=truststore
-                "
             # Configuration for mTLS outcoming requests (Java)    
-            JAVA_OPTS : '
+            JAVA_OPTS : >-
                 -Ddb.driver=org.postgresql.Driver
                 -Ddb.url=jdbc:postgresql://postgres:5432/alfresco
                 -Dalfresco.host=${SERVER_NAME}
@@ -57,7 +56,6 @@ services:
                 -Dencryption.ssl.keystore.location=/usr/local/tomcat/keystore/ssl.keystore
                 -Dencryption.ssl.truststore.type=PKCS12
                 -Dencryption.ssl.truststore.location=/usr/local/tomcat/keystore/ssl.truststore
-            '
         healthcheck:
           test:
             - CMD
@@ -102,17 +100,16 @@ services:
             SOLR_SSL_TRUST_STORE_PASSWORD: "truststore"
             SOLR_SSL_TRUST_STORE_TYPE: "PKCS12"
             SOLR_SSL_NEED_CLIENT_AUTH: "true"
-            JAVA_TOOL_OPTIONS: "
+            JAVA_TOOL_OPTIONS: >-
                 -Dsolr.jetty.truststore.password=truststore
                 -Dsolr.jetty.keystore.password=keystore
                 -Dssl-keystore.password=keystore
                 -Dssl-truststore.password=truststore
-            " 
-            SOLR_OPTS: "
+                -Djdk.tls.client.protocols=TLSv1.3
+            SOLR_OPTS: >-
                 -XX:-UseLargePages 
                 -Dsolr.ssl.checkPeerName=false
                 -Dsolr.allow.unsafe.resourceloading=true 
-            "
         depends_on:
           alfresco:
             condition: service_healthy
@@ -128,9 +125,8 @@ services:
         image: alfresco/alfresco-transform-core-aio:${TRANSFORM_ENGINE_TAG}
         restart: on-failure
         environment:
-            JAVA_OPTS: "
+            JAVA_OPTS: >-
               -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80
-            "
 
     postgres:
         image: postgres:${POSTGRES_TAG}
@@ -138,12 +134,12 @@ services:
             - POSTGRES_PASSWORD=alfresco
             - POSTGRES_USER=alfresco
             - POSTGRES_DB=alfresco
-        command: "
+        command: >-
             postgres
               -c max_connections=200
               -c logging_collector=on
               -c log_min_messages=LOG
-              -c log_directory=/var/log/postgresql"
+              -c log_directory=/var/log/postgresql
         healthcheck:
           test: ["CMD-SHELL", "pg_isready"]
           interval: 10s
@@ -157,11 +153,10 @@ services:
             REPO_PORT: "8080"
             CSRF_FILTER_REFERER: "http://localhost:8080/.*"
             CSRF_FILTER_ORIGIN: "http://localhost:8080"
-            JAVA_OPTS: "
+            JAVA_OPTS: >-
                 -Dalfresco.context=alfresco
                 -Dalfresco.protocol=http
                 -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80
-                "
         depends_on:
           alfresco:
             condition: service_healthy
