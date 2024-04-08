@@ -11,7 +11,7 @@ services:
             TRUSTSTORE_LOCATION: /usr/local/tomcat/keystore/ssl.truststore
             TRUSTSTORE_TYPE: PKCS12
             TRUSTSTORE_PASS: truststore
-            CERT_ALIAS: ssl-repo
+            CERT_ALIAS: ssl.repo
             # EC, RSA
             CERT_TYPE: RSA
         depends_on: 
@@ -82,9 +82,9 @@ services:
             SOLR_HOSTNAME: solr6
             ALFRESCO_HOSTNAME: alfresco
             KEYSTORE_TYPE: PKCS12
-            KEYSTORE_LOCATION: /opt/alfresco-search-services/keystore/ssl-repo-client.keystore
+            KEYSTORE_LOCATION: /opt/alfresco-search-services/keystore/ssl.repo.client.keystore
             TRUSTSTORE_TYPE: PKCS12
-            TRUSTSTORE_LOCATION: /opt/alfresco-search-services/keystore/ssl-repo-client.truststore
+            TRUSTSTORE_LOCATION: /opt/alfresco-search-services/keystore/ssl.repo.client.truststore
         environment:
             SOLR_JAVA_MEM: "-XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"
             SOLR_ALFRESCO_HOST: "alfresco"
@@ -93,10 +93,10 @@ services:
             SOLR_SOLR_PORT: "8983"
             SOLR_CREATE_ALFRESCO_DEFAULTS: "alfresco,archive"
             # Configuration for mTLS incoming requests (Jetty)
-            SOLR_SSL_KEY_STORE: "/opt/alfresco-search-services/keystore/ssl-repo-client.keystore"
+            SOLR_SSL_KEY_STORE: "/opt/alfresco-search-services/keystore/ssl.repo.client.keystore"
             SOLR_SSL_KEY_STORE_PASSWORD: "keystore"
             SOLR_SSL_KEY_STORE_TYPE: "PKCS12"
-            SOLR_SSL_TRUST_STORE: "/opt/alfresco-search-services/keystore/ssl-repo-client.truststore"
+            SOLR_SSL_TRUST_STORE: "/opt/alfresco-search-services/keystore/ssl.repo.client.truststore"
             SOLR_SSL_TRUST_STORE_PASSWORD: "truststore"
             SOLR_SSL_TRUST_STORE_TYPE: "PKCS12"
             SOLR_SSL_NEED_CLIENT_AUTH: "true"
