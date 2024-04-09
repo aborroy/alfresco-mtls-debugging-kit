@@ -43,12 +43,13 @@ public class Application implements CommandLineRunner {
     @Value("${truststore.password}")
     String truststorePassword;
 
-    public static void main(String... args) throws Exception {
+    public static void main(String... args) {
         SpringApplication.run(Application.class, args);
     }
 
     /**
      * Analyzes errors and prints error messages based on the error stream content.
+     * The program exit with code error 1 if errors are detected.
      *
      * @param errorStream Error stream containing error messages.
      * @param element     Element to analyze errors for (e.g., "ENDPOINT", "CONNECTION", "KEYSTORE", "TRUSTSTORE").
@@ -67,7 +68,7 @@ public class Application implements CommandLineRunner {
             });
             System.out.println("ERRORS DETAIL: ");
             System.out.println(error);
-            errorStream.reset();
+            System.exit(1);
         }
 
     }
@@ -79,22 +80,6 @@ public class Application implements CommandLineRunner {
         System.setErr(new PrintStream(outputStream));
 
         Map<String, Object> params = new HashMap<>();
-        params.put("host", host);
-        params.put("port", port);
-
-        CryptoUtils.getTlsEndpointParameters(
-                host, port,
-                keystoreType, keystoreLocation, keystorePassword.toCharArray(),
-                truststoreType, truststoreLocation, truststorePassword.toCharArray());
-
-        analyzeErrors(outputStream, "ENDPOINT", params);
-
-        HttpConnectionRunner.testConnection(
-                host, port, context,
-                keystoreType, keystoreLocation, keystorePassword.toCharArray(),
-                truststoreType, truststoreLocation, truststorePassword.toCharArray());
-
-        analyzeErrors(outputStream, "CONNECTION", params);
 
         CryptoUtils.verifyKeyStore(keystoreType, keystoreLocation, keystorePassword.toCharArray(), new String[]{});
 
@@ -109,6 +94,21 @@ public class Application implements CommandLineRunner {
         params.put("keystore_location", truststoreLocation);
         params.put("keystore_password", truststorePassword);
         analyzeErrors(outputStream, "TRUSTSTORE", params);
+
+        params.put("host", host);
+        params.put("port", port);
+        CryptoUtils.getTlsEndpointParameters(
+                host, port,
+                keystoreType, keystoreLocation, keystorePassword.toCharArray(),
+                truststoreType, truststoreLocation, truststorePassword.toCharArray());
+
+        analyzeErrors(outputStream, "ENDPOINT", params);
+
+        HttpConnectionRunner.testConnection(
+                host, port, context,
+                keystoreType, keystoreLocation, keystorePassword.toCharArray(),
+                truststoreType, truststoreLocation, truststorePassword.toCharArray());
+        analyzeErrors(outputStream, "CONNECTION", params);
 
     }
 

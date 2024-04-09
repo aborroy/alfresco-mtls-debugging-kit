@@ -34,7 +34,10 @@ public interface ErrorCatalog {
             "javax.net.ssl.SSLHandshakeException: Received fatal alert: bad_certificate",
                 "Current keystore seems to be wrong. It does not include KEY certificates accepted by the endpoint.",
             "sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target",
-                "Current truststore seems to be wrong. It does not include TRUST certificates provided by the endpoint."
+                "Current truststore seems to be wrong. It does not include TRUST certificates provided by the endpoint.",
+            "java.security.cert.CertPathValidatorException: Path does not chain with any of the trust anchors",
+                "Current truststore located in '${keystore_location}' doesn't include all the certification chain. \n" +
+                    "Add TRUST certificates for all required CAs and SubCAs."
     );
 
 }
