@@ -4,7 +4,6 @@ Set of tools to debug mTLS configuration issues when installing Alfresco Service
 
 ## Addons
 
-The folder [addons](addons)
 
 ### Alfresco Repository
 
@@ -23,8 +22,6 @@ The folder [addons](addons)
 
 
 ## Apps
-
-[apps](apps)
 
 [mtls-conf-app](apps/mtls-conf-app)
 
