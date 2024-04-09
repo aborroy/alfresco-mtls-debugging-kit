@@ -79,7 +79,7 @@ public class CryptoUtils {
                 SSLSession session = socket.getSession();
                 tlsEndpoint.setTlsProcotol(session.getProtocol());
                 List<TrustedCertificate> trustedCertificates = new ArrayList<>();
-                Arrays.stream(session.getPeerCertificates()).forEach(certificate -> {
+                Arrays.stream(session.getLocalCertificates()).forEach(certificate -> {
                     TrustedCertificate trustedCertificate = new TrustedCertificate();
                     X509Certificate x509certificate = ((X509Certificate) certificate);
                     trustedCertificate.setName(x509certificate.getSubjectX500Principal().getName());
