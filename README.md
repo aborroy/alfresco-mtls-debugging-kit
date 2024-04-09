@@ -2,18 +2,38 @@
 
 Set of tools to debug mTLS configuration issues when installing Alfresco Services using mTLS protocol.
 
-## Alfresco Repository
+## Addons
 
-[alfresco-http-java-client](alfresco-http-java-client)
+The folder [addons](addons)
 
-## Alfresco Search Services
+### Alfresco Repository
 
-[solr-http-java-client](solr-http-java-client)
+[alfresco-http-java-client](addons/alfresco-http-java-client)
 
-## Common Java Library for Cryptographic operations
+### Alfresco Search Services
 
-[crypto-utils](crypto-utils)
+[solr-http-java-client](addons/solr-http-java-client)
+
+
+## Common
+
+### Common Java Library for Cryptographic operations
+
+[crypto-utils](addons/crypto-utils)
+
+
+## Apps
+
+[apps](apps)
+
+[mtls-conf-app](apps/mtls-conf-app)
+
 
 ## Sample Docker Compose deployment
 
 [docker](docker)
+
+
+## Sample Certificate Generation process
+
+[step-ca](step-ca)

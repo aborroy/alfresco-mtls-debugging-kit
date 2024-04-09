@@ -1,0 +1,12 @@
+services:
+  step-ca:
+    image: docker.io/smallstep/step-ca
+    environment:
+      - DOCKER_STEPCA_INIT_NAME=step-ca
+      - DOCKER_STEPCA_INIT_DNS_NAMES=step-ca,$(hostname -f)
+    volumes:
+      - ./step:/home/step
+    ports:
+      - "9000:9000"
+  step-cli:
+    image: docker.io/smallstep/step-cli
