@@ -1,6 +1,15 @@
 # SOLR HTTP Java Client - REST API Action
 
-Available in https://localhost:8983/solr/admin/cores?action=HTTP-CLIENT&coreName=alfresco
+The project can be built with Maven:
+
+```sh
+mvn clean package
+```
+
+>> Note that a `browser.p12` client certificate is required to be installed in the browser to access this action
+
+
+Url: https://localhost:8983/solr/admin/cores?action=HTTP-CLIENT&coreName=alfresco
 
 Sample response:
 
