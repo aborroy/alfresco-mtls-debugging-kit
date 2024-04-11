@@ -44,7 +44,7 @@ Credentials:
 
 The [addons](addons) folder includes Web Admin Tools for Repository and SOLR. You can open them in a web browser and see information about mTLS setup, like where it connects to, the keys and certificates it uses, and the passwords.
 
-The [docker](docker) folder applies both tools using Docker Compose. Deploying them locally require following steps.
+The [docker](docker) folder applies both tools using Docker Compose. Deploying them locally requires following steps.
 
 **Admin Console Page for Alfresco Repository**
 
