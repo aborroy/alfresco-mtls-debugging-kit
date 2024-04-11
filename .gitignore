@@ -30,3 +30,6 @@ target/
 *.jar
 *.war
 *.ear
+
+# Exclude Docker Jars from ignoring
+!docker/**/*.jar

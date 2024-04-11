@@ -98,6 +98,9 @@ Package the private key issued for `alfresco` in a PKCS12 keystore named `browse
 openssl pkcs12 -export -out browser.p12 -inkey alfresco.key -in alfresco.crt
 ```
 
+>> You also have the option to use the `alfresco.pkcs12` keystore created earlier, which is compatible with a wide range of browsers
+
+
 ## Modify Alfresco Docker Compose configuration to use the new certificates
 
 Once keystore files are generated, copy the [docker](https://github.com/aborroy/alfresco-mtls-debugging-kit/tree/main/docker) folder to apply the new configuration.
