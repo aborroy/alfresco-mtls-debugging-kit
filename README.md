@@ -90,4 +90,4 @@ java.net.ConnectException: Operation timed out
 
 ## Keystores Generation Lab
 
-This folder includes instructions to create a new set of keystores for Alfresco mTLS configuration. Instead of using [alfresco-ssl-generator](https://github.com/Alfresco/alfresco-ssl-generator/blob/master/ssl-tool/samples/community.sh) tool, [step-ca](https://smallstep.com/certificates/) service is providing EC certificates to be used with [ECDSA algoritm](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm). The certificates are packaged as expected by the Alfresco platform.
+This [folder](step-ca) includes instructions to create a new set of keystores for Alfresco mTLS configuration. Instead of using [alfresco-ssl-generator](https://github.com/Alfresco/alfresco-ssl-generator/blob/master/ssl-tool/samples/community.sh) tool, [step-ca](https://smallstep.com/certificates/) service is providing EC certificates to be used with [ECDSA algoritm](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm). The certificates are packaged as expected by the Alfresco platform.
